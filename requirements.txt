@@ -1,0 +1,15 @@
+
+Flask
+Werkzeug
+opencv-python
+numpy
+utils
+Flask-Mail
+Flask-MySQLdb
+mysqlclient
+Pillow
+queuelib
+tensorflow
+flask-wtf
+tensorflow-object-detection-api
+os
