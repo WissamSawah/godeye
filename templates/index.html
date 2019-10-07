@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Video Streaming Demonstration</h1>
+    <img id="bg" style="max-width:100%;" src="{{ url_for('video_feed') }}">
+    <p>You are logged in as {{ username }}</p>
+    <a href="/stop/">Click me</a>
+    <a id="bb" href="/stop/">Click me</a>
+    <input id="button" type="submit" name="button" value="enter"/>
+    <!-- <script src="main.js"></script> -->
+
+
+  {% endblock %}
