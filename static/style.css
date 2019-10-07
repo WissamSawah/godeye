@@ -1,0 +1,239 @@
+body {
+    font-family: "Lato", sans-serif;
+    background-color: #435165;
+}
+
+/* Style the tab */
+div.tab {
+    overflow: auto;
+    border: 2px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+.btn {
+    cursor: pointer;
+}
+
+h3,
+h2 {
+    color: #678e2d !important;
+    border-bottom: 0 !important;
+    font-size: 2em !important;
+    font-weight: 400 !important;
+    margin-bottom: 23px !important;
+}
+
+.profileimg {
+    width: 100px;
+}
+
+.movieNav {
+    padding: 30px;
+    font-size: 18px;
+    text-align: center;
+    margin: 20px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.16),0 0 0 1px rgba(0,0,0,.08);
+}
+
+b {
+    color: #678e2d;
+}
+
+.pro {
+    text-align: center;
+}
+
+.navbar {
+    bottom: 10px;
+    position: relative;
+    left: 0;
+    width: 100%;
+    background-color: rgba(29, 33, 35, 0.94);
+    z-index: 999;
+    box-shadow: 0 3px 2px #678e2d;
+    clear: both;
+}
+
+.navbar .selected {
+    border-bottom: 2px solid #678e2d;
+}
+
+.navbar a {
+    display: inline-block;
+    margin-left: 24px;
+    margin-right: 35px;
+    text-decoration: none;
+    color: #fff;
+}
+
+a {
+    color: #678e2d !important;
+}
+
+h1 {
+    margin-top: 30px !important;
+    color: #678e2d !important;
+    position: relative !important;
+}
+
+.intro-img {
+    float: right;
+    /* border-radius: 90px; */
+    margin-left: 85px;
+    margin-bottom: 15px;
+}
+
+.intro-img2 {
+    float: left;
+    /* border-radius: 90px; */
+    margin-right: 45px;
+}
+
+img {
+    max-width: 100%;
+}
+
+.card-body {
+    margin: 30px !important;
+    padding: 0.25rem !important;
+}
+
+.nav-wrapper {
+    position: relative;
+    height: 100%;
+}
+
+.container {
+    margin: 0 auto;
+}
+
+.navbar a:link,
+.navbar a:visited {
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+/* Style the buttons inside the tab */
+div.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+}
+.login, .register {
+  	width: 400px;
+  	background-color: #ffffff;
+  	box-shadow: 0 0 9px 0 rgba(0, 0, 0, 0.3);
+  	margin: 100px auto;
+}
+.login h1, .register h1 {
+  	text-align: center;
+  	color: #5b6574;
+  	font-size: 24px;
+  	padding: 20px 0 20px 0;
+  	border-bottom: 1px solid #dee0e4;
+}
+.login .links, .register .links {
+  	display: flex;
+  	padding: 0 15px;
+}
+.login .links a, .register .links a {
+  	color: #adb2ba;
+  	text-decoration: none;
+  	display: inline-flex;
+  	padding: 0 10px 10px 10px;
+  	font-weight: bold;
+}
+.login .links a:hover, .register .links a:hover {
+  	color: #9da3ac;
+}
+.login .links a.active, .register .links a.active {
+  	border-bottom: 3px solid #678e2d;
+  	color: #678e2d;
+}
+.login form, .register form {
+  	display: flex;
+  	flex-wrap: wrap;
+  	justify-content: center;
+  	padding-top: 20px;
+}
+.login form label, .register form label {
+  	display: flex;
+  	justify-content: center;
+  	align-items: center;
+  	width: 50px;
+  	height: 50px;
+  	background-color: #678e2d;
+  	color: #ffffff;
+}
+.login form input[type="password"], .login form input[type="text"], .login form input[type="email"], .register form input[type="password"], .register form input[type="text"], .register form input[type="email"] {
+  	width: 310px;
+  	height: 50px;
+  	border: 1px solid #dee0e4;
+  	margin-bottom: 20px;
+  	padding: 0 15px;
+}
+.login form input[type="submit"], .register form input[type="submit"] {
+  	width: 100%;
+  	padding: 15px;
+  	margin-top: 20px;
+  	background-color: #678e2d;
+  	border: 0;
+  	cursor: pointer;
+  	font-weight: bold;
+  	color: #ffffff;
+  	transition: background-color 0.2s;
+}
+.login form input[type="submit"]:hover, .register form input[type="submit"]:hover {
+  	background-color: #678e2d;
+  	transition: background-color 0.2s;
+}
+
+#bb {
+color: #ccc !important;
+
+float: right;
+
+margin: 10px;
+
+font-size: 1.5rem;
+
+text-decoration: none;
+}
+
+#bb :hover {
+    color: #678e2d !important;
+}
+
+
+
+/* Change background color of buttons on hover */
+div.tab button:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+div.tab button.active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+/* Style the close button */
+.topright {
+    float: right;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.topright:hover {color: red;}
