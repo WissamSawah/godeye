@@ -10,6 +10,4 @@ mysqlclient
 Pillow
 queuelib
 tensorflow
-flask-wtf
 tensorflow-object-detection-api
-os
