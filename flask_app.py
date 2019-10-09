@@ -1,4 +1,3 @@
-import io
 import base64
 import sys
 import tempfile
@@ -7,7 +6,7 @@ import time
 import argparse
 # from datetime import datetime
 import datetime
- 
+
 import numpy as np
 from queue import Queue
 from threading import Thread
@@ -59,7 +58,7 @@ app.config.update(
 	MAIL_PORT=465,
 	MAIL_USE_SSL=True,
 	MAIL_USERNAME = 'wissamsy81@gmail.com',
-	MAIL_PASSWORD = '0'
+	MAIL_PASSWORD = '0936065947'
 	)
 mail = Mail(app)
 
@@ -71,9 +70,6 @@ app.config['MYSQL_PASSWORD'] = 'wesam1995'
 app.config['MYSQL_DB'] = 'pythonlogin'
 
 mysql = MySQL(app)
-
-
-
 
 PATH_TO_CKPT = 'frozen_inference_graph.pb'
 PATH_TO_LABELS = 'mscoco_label_map.pbtxt'
@@ -157,6 +153,7 @@ class WebcamVideoStream:
     def stop(self):
         # indicate that the thread should be stopped
         self.stopped = True
+        # self.stream.release()
 
 
 def is_image():
@@ -168,29 +165,7 @@ def is_image():
 
   return _is_image
 
-def draw_bounding_box_on_image(image, box, color='red', thickness=4):
-  draw = ImageDraw.Draw(image)
-  im_width, im_height = image.size
-  ymin, xmin, ymax, xmax = box
-  (left, right, top, bottom) = (xmin * im_width, xmax * im_width,
-                                ymin * im_height, ymax * im_height)
-  draw.line([(left, top), (left, bottom), (right, bottom),
-             (right, top), (left, top)], width=thickness, fill=color)
 
-
-
-def encode_image(image):
-  image_buffer = io.BytesIO()
-  image.save(image_buffer, format='PNG')
-  mime_str = 'data:image/png;base64,'
-  imgstr = '{0!s}'.format(base64.b64encode(image_buffer.getvalue()))
-  quote_index = imgstr.find("b'")
-  end_quote_index = imgstr.find("'", quote_index+2)
-  imgstr = imgstr[quote_index+2:end_quote_index]
-  imgstr = mime_str + imgstr
-  #imgstr = 'data:image/png;base64,{0!s}'.format(
-      #base64.b64encode(image_buffer.getvalue()))
-  return imgstr
 
 # Webcam feed Helper
 def worker(input_q, output_q):
@@ -241,16 +216,16 @@ def detect_objects_webcam(image_np, sess, detection_graph):
         if classes[0][i] == 3 or classes[0][i] == 6 or classes[0][i] == 8:
             if scores[0][i] >= 0.5:
                 mid_x = (boxes[0][i][1]+boxes[0][i][3])/2
-                mid_y = (boxes[0][i][0]+boxes[0][i][2])/2
+                mid_y = (boxes[0][i][2]+boxes[0][i][3])/2
                 apx_distance = round(((1 - (boxes[0][i][3] - boxes[0][i][1]))**4),1)
+
                 cv2.putText(image_np, '{}'.format(apx_distance), (int(mid_x*800),int(mid_y*450)), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
                 # gray = cv2.cvtColor(image_np, cv2.COLOR_BGR2GRAY)
 
                 if apx_distance == 0:
                     # if mid_x > 0.3 and mid_x < 0.7:
-                    if mid_x > 0.3 and mid_x < 0.7:
-                        cv2.putText(image_np, 'WARNING!!!', (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 3)
-                        # MyFunction()
+                    # if mid_x > 0.3 and mid_x < 0.7:
+                    cv2.putText(image_np, 'WARNING!!!', (50,50), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,255), 3)
 
     return dict(rect_points=rect_points, class_names=class_names, class_colors=class_colors)
 
@@ -285,55 +260,6 @@ class ObjectDetector(object):
         tf.import_graph_def(od_graph_def, name='')
 
     return detection_graph
-
-  def _load_image_into_numpy_array(self, image, ):
-    (im_width, im_height) = image.size
-    return np.array(image.getdata()).reshape(
-        (im_height, im_width, 3)).astype(np.uint8)
-
-def detect(self, image):
-    image_np = self._load_image_into_numpy_array(image)
-    image_np_expanded = np.expand_dims(image_np, axis=0)
-
-    graph = self.detection_graph
-    image_tensor = graph.get_tensor_by_name('image_tensor:0')
-    boxes = graph.get_tensor_by_name('detection_boxes:0')
-    scores = graph.get_tensor_by_name('detection_scores:0')
-    classes = graph.get_tensor_by_name('detection_classes:0')
-    num_detections = graph.get_tensor_by_name('num_detections:0')
-
-    (boxes, scores, classes, num_detections) = self.sess.run(
-        [boxes, scores, classes, num_detections],
-        feed_dict={image_tensor: image_np_expanded})
-
-    boxes, scores, classes, num_detections = map(
-        np.squeeze, [boxes, scores, classes, num_detections])
-
-    return boxes, scores, classes.astype(int), num_detections.astype(int)
-
-# Detection function
-def detect_objects(image_path):
-  image = Image.open(image_path).convert('RGB')
-  boxes, scores, classes, num_detections = client.detect(image)
-  image.thumbnail((480, 480), Image.ANTIALIAS)
-
-  new_images = {}
-  for i in range(num_detections):
-    if scores[i] < 0.7: continue
-    cls = classes[i]
-    if cls not in new_images.keys():
-      new_images[cls] = image.copy()
-    draw_bounding_box_on_image(new_images[cls], boxes[i],
-                               thickness=int(scores[i]*10)-4)
-
-  result = {}
-  result['original'] = encode_image(image.copy())
-
-  for cls, new_image in new_images.items():
-    category = client.category_index[cls]['name']
-    result[category] = encode_image(new_image)
-
-  return result
 
 @app.route('/godeye/index')
 def main_display():
@@ -385,6 +311,7 @@ def realstop():
             print("Stopped")
     return render_template('main.html', photo_form=photo_form, video_form=video_form)
 
+
 @app.route('/godeye/', methods=['GET', 'POST'])
 def login():
     # Output message if something goes wrong...
@@ -407,7 +334,7 @@ def login():
             session['id'] = account['id']
             session['username'] = account['username']
             # Redirect to home page
-            # send_mail()
+            send_mail()
             flash('You were successfully logged in ' + username)
             return redirect(url_for('main_display'))
         else:
@@ -537,10 +464,7 @@ def realpros():
                 detection_graph = client.detection_graph
                 sess = client.sess
                 detect_objects_webcam(frame, sess, detection_graph)
-                # MyFunction()
-                # draw()
-                #video_capture.update()
-            # print("out of while")
+                # centers=[]
             fps.update()
 
 
@@ -550,6 +474,8 @@ def realpros():
 client = ObjectDetector()
 
 video_init = WebcamVideoStream(src=0, width=480, height=360)
+# video_init2 = WebcamVideoStream(src="http://192.168.1.197:8020/videoView", width=480, height=360)
+
 fps_init = FPS()
 
 app.secret_key = 'super secret key'
