@@ -4,25 +4,26 @@ import tempfile
 import cv2
 import time
 import argparse
-# from datetime import datetime
 import datetime
+import re
+
 
 import numpy as np
 from queue import Queue
 from threading import Thread
 import threading
 
+from fps import FPS
+from stream import liveStream
+from detector import ObjectDetector
+
 MODEL_BASE = 'models/research'
 sys.path.append(MODEL_BASE)
 sys.path.append(MODEL_BASE + '/object_detection')
 sys.path.append(MODEL_BASE + '/slim')
 
-from flask import redirect, flash
-from flask import render_template
-from flask import request
-from flask import Response
-from flask import url_for
-from flask import session
+from flask import Flask, redirect, flash, render_template, request, Response, url_for, session, session
+
 from flask_wtf.file import FileField
 import numpy as np
 from PIL import Image
@@ -33,8 +34,7 @@ import tensorflow as tf
 # from utils import label_map_util
 from object_detection.utils import visualization_utils as vis_util
 from werkzeug.datastructures import CombinedMultiDict
-from wtforms import Form
-from wtforms import ValidationError
+from wtforms import Form, ValidationError
 from cv2 import imencode
 from app_utils import draw_boxes_and_labels
 from object_detection.utils import label_map_util
@@ -42,11 +42,6 @@ from MySQLdb import escape_string as thwart
 from flask_mail import Mail, Message
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
-from flask import Flask, render_template, Response, request, redirect, url_for, session
-import re
-from bs4 import BeautifulSoup
-from itertools import count
-
 
 
 app = Flask(__name__)
@@ -71,6 +66,7 @@ app.config['MYSQL_DB'] = 'pythonlogin'
 
 mysql = MySQL(app)
 
+
 PATH_TO_CKPT = 'frozen_inference_graph.pb'
 PATH_TO_LABELS = 'mscoco_label_map.pbtxt'
 
@@ -82,92 +78,6 @@ extensions = sorted(content_types.keys())
 
 
 
-# Helper Functions
-class FPS:
-    def __init__(self):
-        # store the start time, end time, and total number of frames
-        # that were examined between the start and end intervals
-        self._start = None
-        self._end = None
-        self._numFrames = 0
-
-    def start(self):
-        # start the timer
-        self._start = datetime.datetime.now()
-        return self
-
-    def stop(self):
-        # stop the timer
-        self._end = datetime.datetime.now()
-
-    def update(self):
-        # increment the total number of frames examined during the
-        # start and end intervals
-        self._numFrames += 1
-
-    def elapsed(self):
-        # return the total number of seconds between the start and
-        # end interval
-        return (self._end - self._start).total_seconds()
-
-    def fps(self):
-        # compute the (approximate) frames per second
-        return self._numFrames / self.elapsed()
-
-class WebcamVideoStream:
-    def __init__(self, src, width, height):
-        # initialize the video camera stream and read the first frame
-        # from the stream
-        self.src = src
-        self.width = width
-        self.height = height
-
-        # initialize the variable used to indicate if the thread should
-        # be stopped
-        self.stopped = False
-
-    def init(self):
-        self.stream = cv2.VideoCapture(self.src)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-        (self.grabbed, self.frame) = self.stream.read()
-
-    def start(self):
-        # start the thread to read frames from the video stream
-        self.camthread = Thread(target=self.update, args=())
-        self.camthread.start()
-        # WebcamVideoStream.new()
-        return self
-
-
-    def update(self):
-        # keep looping infinitely until the thread is stopped
-        while True:
-            (self.grabbed, self.frame) = self.stream.read()
-
-    def read(self):
-        # return the frame most recently read
-        # if the thread indicator variable is set, stop the thread
-        return self.frame
-
-    def stop(self):
-        # indicate that the thread should be stopped
-        self.stopped = True
-        # self.stream.release()
-
-
-def is_image():
-  def _is_image(form, field):
-    if not field.data:
-      raise ValidationError()
-    elif field.data.filename.split('.')[-1].lower() not in extensions:
-      raise ValidationError()
-
-  return _is_image
-
-
-
-# Webcam feed Helper
 def worker(input_q, output_q):
     detection_graph = client.detection_graph
     sess = client.sess
@@ -229,155 +139,14 @@ def detect_objects_webcam(image_np, sess, detection_graph):
 
     return dict(rect_points=rect_points, class_names=class_names, class_colors=class_colors)
 
-# Image class
-class PhotoForm(Form):
-  input_photo = FileField(
-      'File extension should be: %s (case-insensitive)' % ', '.join(extensions),
-      validators=[is_image()])
+
 
 class VideoForm(Form):
     input_video = FileField()
 
-# Obect Dection Class
-class ObjectDetector(object):
-
-  def __init__(self):
-    self.detection_graph = self._build_graph()
-    self.sess = tf.compat.v1.Session(graph=self.detection_graph)
-
-    label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-    categories = label_map_util.convert_label_map_to_categories(
-        label_map, max_num_classes=90, use_display_name=True)
-    self.category_index = label_map_util.create_category_index(categories)
-
-  def _build_graph(self):
-    detection_graph = tf.Graph()
-    with detection_graph.as_default():
-      od_graph_def = tf.compat.v1.GraphDef()
-      with tf.io.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
-        serialized_graph = fid.read()
-        od_graph_def.ParseFromString(serialized_graph)
-        tf.import_graph_def(od_graph_def, name='')
-
-    return detection_graph
-
-@app.route('/godeye/index')
-def main_display():
-	if 'loggedin' in session:
-	    photo_form = PhotoForm(request.form)
-	    video_form = VideoForm(request.form)
-	    #return render_template('main.html', photo_form=photo_form, result={})
-	    return render_template('main.html', photo_form=photo_form, video_form=video_form, result={}, username=session['username'])
-	return redirect(url_for('login'))
-
-@app.route('/imgproc', methods=['GET', 'POST'])
-def imgproc():
-  video_form = VideoForm(request.form)
-  form = PhotoForm(CombinedMultiDict((request.files, request.form)))
-  if request.method == 'POST' and form.validate():
-    with tempfile.NamedTemporaryFile() as temp:
-      form.input_photo.data.save(temp)
-      temp.flush()
-      print(temp.name)
-      result = detect_objects(temp.name)
-
-    photo_form = PhotoForm(request.form)
-    return render_template('main.html',
-                           photo_form=photo_form, video_form=video_form, result=result)
-  else:
-    return redirect(url_for('main_display'))
+# registration, login, logout
 
 
-
-@app.route('/realproc', methods=['GET', 'POST'])
-def realproc():
-
-	# WebcamVideoStream.new()
-	return render_template('realtime.html')
-
-
-
-@app.route('/realstop', methods=['GET', 'POST'])
-def realstop():
-    photo_form = PhotoForm(request.form)
-    video_form = VideoForm(request.form)
-    if request.method == 'POST':
-        print("In - Stop - POST")
-        if request.form['realstop'] == 'Stop Web Cam':
-            print(request.form['realstop'])
-            fps_init.stop()
-            video_init.stop()
-            video_init.update()
-            print("Stopped")
-    return render_template('main.html', photo_form=photo_form, video_form=video_form)
-
-
-@app.route('/godeye/', methods=['GET', 'POST'])
-def login():
-    # Output message if something goes wrong...
-    msg = ''
-    # Check if "username" and "password" POST requests exist (user submitted form)
-    session.permanent = False
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
-        # Create variables for easy access
-        username = request.form['username']
-        password = request.form['password']
-        # Check if account exists using MySQL
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM accounts WHERE username = %s AND password = %s', (username, password))
-        # Fetch one record and return result
-        account = cursor.fetchone()
-         # If account exists in accounts table in out database
-        if account:
-            # Create session data, we can access this data in other routes
-            session['loggedin'] = True
-            session['id'] = account['id']
-            session['username'] = account['username']
-            # Redirect to home page
-            send_mail()
-            flash('You were successfully logged in ' + username)
-            return redirect(url_for('main_display'))
-        else:
-            # Account doesnt exist or username/password incorrect
-            msg = 'Incorrect username/password!'
-    return render_template('login.html', msg=msg)
-
-@app.route('/send-mail/')
-def send_mail():
-    try:
-        msg = Message("Send Mail Tutorial!",
-            sender="wissamsy81@gmail.com",
-            recipients=["wesam.sawah@me.com"])
-        msg.body = 'Hello Waleed!\n\nIt looks like someone just logged into your God`s Eye system\n\n The login time is: {}'.format(datetime.datetime.now()).split('.')[0]
-        mail.send(msg)
-        return 'Mail sent!'
-    except Exception:
-        return("error")
-
-@app.route('/godeye/logout')
-def logout():
-    # Remove session data, this will log the user out
-   session.pop('loggedin', None)
-   session.pop('id', None)
-   session.pop('username', None)
-   # Redirect to login page
-   return redirect(url_for('login'))
-
-@app.route('/godeye/profile')
-def profile4():
-    # Check if user is loggedin
-    if 'loggedin' in session:
-        # We need all the account info for the user so we can display it on the profile page
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM accounts WHERE id = %s', [session['id']])
-        account = cursor.fetchone()
-        # Show the profile page with account info
-        return render_template('profile.html', account=account)
-    # User is not loggedin redirect to login page
-    return redirect(url_for('login'))
-
-
-# http://localhost:5000/pythinlogin/register - this will be the registration page, we need to use both GET and POST requests
 @app.route('/godeye/register', methods=['GET', 'POST'])
 def register():
     # Output message if something goes wrong...
@@ -416,7 +185,114 @@ def register():
     return render_template('register.html', msg=msg)
 
 
+@app.route('/godeye/', methods=['GET', 'POST'])
+def login():
+    # Output message if something goes wrong...
+    msg = ''
+    # Check if "username" and "password" POST requests exist (user submitted form)
+    session.permanent = False
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
+        # Create variables for easy access
+        username = request.form['username']
+        password = request.form['password']
+        # Check if account exists using MySQL
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM accounts WHERE username = %s AND password = %s', (username, password))
+        # Fetch one record and return result
+        account = cursor.fetchone()
+         # If account exists in accounts table in out database
+        if account:
+            # Create session data, we can access this data in other routes
+            session['loggedin'] = True
+            session['id'] = account['id']
+            session['username'] = account['username']
+            # Redirect to home page
+            send_mail()
+            flash('You were successfully logged in ' + username)
+            return redirect(url_for('main_display'))
+        else:
+            # Account doesnt exist or username/password incorrect
+            msg = 'Incorrect username/password!'
+    return render_template('login.html', msg=msg)
 
+
+
+@app.route('/godeye/logout')
+def logout():
+    # Remove session data, this will log the user out
+   session.pop('loggedin', None)
+   session.pop('id', None)
+   session.pop('username', None)
+   # Redirect to login page
+   return redirect(url_for('login'))
+
+
+
+@app.route('/godeye/profile')
+def profile4():
+    # Check if user is loggedin
+    if 'loggedin' in session:
+        # We need all the account info for the user so we can display it on the profile page
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM accounts WHERE id = %s', [session['id']])
+        account = cursor.fetchone()
+        # Show the profile page with account info
+        return render_template('profile.html', account=account)
+    # User is not loggedin redirect to login page
+    return redirect(url_for('login'))
+
+
+@app.route('/godeye/index')
+def main_display():
+	if 'loggedin' in session:
+	    video_form = VideoForm(request.form)
+	    #return render_template('main.html', photo_form=photo_form, result={})
+	    return render_template('main.html', photo_form=photo_form, video_form=video_form, result={}, username=session['username'])
+	return redirect(url_for('login'))
+
+
+# Camera image processing
+
+@app.route('/godeye/realproc', methods=['GET', 'POST'])
+def realproc():
+
+	# liveStream.new()
+	return render_template('realtime.html')
+
+
+
+@app.route('/realstop', methods=['GET', 'POST'])
+def realstop():
+    video_form = VideoForm(request.form)
+    if request.method == 'POST':
+        print("In - Stop - POST")
+        if request.form['realstop'] == 'Stop Web Cam':
+            print(request.form['realstop'])
+            fps_init.stop()
+            video_init.stop()
+            video_init.update()
+            print("Stopped")
+    return render_template('main.html', photo_form=photo_form, video_form=video_form)
+
+
+
+@app.route('/send-mail/')
+def send_mail():
+    try:
+        msg = Message("Send Mail Tutorial!",
+            sender="wissamsy81@gmail.com",
+            recipients=["wesam.sawah@me.com"])
+        msg.body = 'Hello Waleed!\n\nIt looks like someone just logged into your God`s Eye system\n\n The login time is: {}'.format(datetime.datetime.now()).split('.')[0]
+        mail.send(msg)
+        return 'Mail sent!'
+    except Exception:
+        return("error")
+
+
+
+
+
+# Just camera without the interface incase someone wanna use it to another application.
 
 @app.route('/realpros')
 def realpros():
@@ -466,15 +342,13 @@ def realpros():
                 detect_objects_webcam(frame, sess, detection_graph)
                 # centers=[]
             fps.update()
-
-
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 client = ObjectDetector()
 
-video_init = WebcamVideoStream(src=0, width=480, height=360)
-# video_init2 = WebcamVideoStream(src="http://192.168.1.197:8020/videoView", width=480, height=360)
+video_init = liveStream(src=0, width=480, height=360)
+# video_init2 = liveStream(src="http://192.168.1.197:8020/videoView", width=480, height=360)
 
 fps_init = FPS()
 
