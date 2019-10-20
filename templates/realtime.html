@@ -35,36 +35,59 @@
 
     </div>
     <div class="card-body">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-success alert-dismissible fade show">
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+
+            {{ message }}
+        </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
         <div class="movieNav">
             <h3 class="control">Control Panel</h3>
             <div>
-                <form id="rstop" method=post action={{ url_for( 'realproc') }}>
-                <input style="background-color:green; border-color:green;" type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="Refreash Cam" class="btn btn-primary">
-
-              <form id="rstop" method=post action={{ url_for( 'realstop') }}>
-                <input style="background-color:red; border-color:red;" type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="Stop Cam" class="btn btn-primary">
-              </form>
-              </form>
+                <form id="rstop" class="form-horizontal" method=post action={{ url_for( 'realproc') }}>
+                <input style="background-color:green !important; border-color:green !important;" type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="Refreash Cam" class="btn btn-primary"></form>
 
               <!-- <form id="rstop" method=post action={{ url_for( 'realstop') }}>
-                <p><input type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="Stop Web Cam" class="btn btn-primary"></p>
+                <input style="background-color:red; border-color:red;" type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="Stop Cam" class="btn btn-primary">
               </form> -->
+
+              <form id="rstop" method=post action={{ url_for( 'realstop') }}>
+                <input type="submit" name="realstop" style="background-color:#e12d18 !important; border-color:#e12d18 !important;" onclick="WaitDisplay('rstop');" value="Stop Web Cam" class="btn btn-primary">
+
+          </form>
+
+          <form id="rstop" method=post action={{ url_for( 'realproc2') }}>
+          <input style="background-color:green !important; border-color:green !important;" type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="view Cam2" class="btn btn-primary"></form>
+
+          <form id="stopcar" method=post action={{ url_for( 'stopcar') }}>
+          <input style="background-color:#e12d18 !important; border-color:#e12d18 !important;" type="submit" name="stopcar" onclick="WaitDisplay('stopcar');" value="Stop Vehicles" class="btn btn-primary"></form>
+
+          <form id="stopcar" method=post action={{ url_for( 'startcar') }}>
+          <input style="background-color:green !important; border-color:green !important;" type="submit" name="startcar" onclick="WaitDisplay('startcar');" value="Start Vehicles" class="btn btn-primary"></form>
+
+
             </div>
-
-
 
         </div>
       <div style="overflow:hidden !important;" class="tab">
-
-
     <div class="card-body">
+
 
       <div class="media">
         <img style="width: 65%;
         margin-left: 11em;" src="{{ url_for('realpros')}}" class="img-thumbnail">
+
       </div>
 
     </div>
+
 </div>
 
     <div class="card-footer text-muted">
