@@ -91,8 +91,16 @@ def worker(input_q, output_q):
     sess.close()
 
 
+
+
+
+
+
+
 class VideoForm(Form):
     input_video = FileField()
+
+
 
 # registration, login, logout
 
@@ -195,9 +203,9 @@ def profile4():
 @app.route('/godeye/index')
 def main_display():
 	if 'loggedin' in session:
-	    video_form = VideoForm(request.form)
+	    # video_form = VideoForm(request.form)
 	    #return render_template('main.html', photo_form=photo_form, result={})
-	    return render_template('main.html', photo_form=photo_form, video_form=video_form, result={}, username=session['username'])
+	    return render_template('main.html', username=session['username'])
 	return redirect(url_for('login'))
 
 
@@ -207,13 +215,43 @@ def main_display():
 def realproc():
 
 	# liveStream.new()
+
 	return render_template('realtime.html')
+
+@app.route('/godeye/realproc2', methods=['GET', 'POST'])
+def realproc2():
+
+	# liveStream.new()
+	return render_template('realtime2.html')
+
+@app.route('/stopcar', methods=['GET', 'POST'])
+def stopcar():
+    # video_form = VideoForm(request.form)
+
+
+    print("#### REQUEST TO STOP THE VEHICLES HAS BEEN SENT! #####")
+    flash('REQUEST TO STOP THE VEHICLES HAS BEEN SENT!')
+    send_mail_stop()
+
+    return render_template('realtime.html')
+
+
+@app.route('/startcar', methods=['GET', 'POST'])
+def startcar():
+    # video_form = VideoForm(request.form)
+
+
+    print("#### REQUEST TO START THE VEHICLES HAS BEEN SENT! #####")
+    flash('REQUEST TO START THE VEHICLES HAS BEEN SENT!')
+    send_mail_start()
+
+    return render_template('realtime.html')
 
 
 
 @app.route('/realstop', methods=['GET', 'POST'])
 def realstop():
-    video_form = VideoForm(request.form)
+    # video_form = VideoForm(request.form)
     if request.method == 'POST':
         print("In - Stop - POST")
         if request.form['realstop'] == 'Stop Web Cam':
@@ -222,7 +260,21 @@ def realstop():
             video_init.stop()
             video_init.update()
             print("Stopped")
-    return render_template('main.html', photo_form=photo_form, video_form=video_form)
+    return render_template('main.html')
+
+
+@app.route('/realstop2', methods=['GET', 'POST'])
+def realstop2():
+    video_form = VideoForm(request.form)
+    if request.method == 'POST':
+        print("In - Stop - POST")
+        if request.form['realstop'] == 'Stop Web Cam':
+            print(request.form['realstop'])
+            fps_init.stop()
+            video_init2.stop()
+            video_init2.update()
+            print("Stopped")
+    return render_template('main.html')
 
 
 
@@ -230,9 +282,36 @@ def realstop():
 def send_mail():
     try:
         msg = Message("Send Mail Tutorial!",
-            sender="wissamsy81@gmail.com",
+            sender=("Godeye",'wissamsy81@gmail.com'),
             recipients=["wesam.sawah@me.com"])
         msg.body = 'Hello Waleed!\n\nIt looks like someone just logged into your God`s Eye system\n\n The login time is: {}'.format(datetime.datetime.now()).split('.')[0]
+        mail.send(msg)
+        return 'Mail sent!'
+    except Exception:
+        return("error")
+
+
+@app.route('/send-mail/')
+def send_mail_stop():
+    try:
+        msg = Message("Vehicles just Stopped!",
+            sender=("Godeye",'wissamsy81@gmail.com'),
+            recipients=["wesam.sawah@me.com"])
+        msg.body = 'Hello Waleed!\n\nA request to stop all vehicles has been sent!\n\n The request has been sent at: {}'.format(datetime.datetime.now()).split('.')[0]
+        mail.send(msg)
+        return 'Mail sent!'
+    except Exception:
+        return("error")
+
+
+
+@app.route('/send-mail/')
+def send_mail_start():
+    try:
+        msg = Message("Vehicles just Started!",
+            sender=("Godeye",'wissamsy81@gmail.com'),
+            recipients=["wesam.sawah@me.com"])
+        msg.body = 'Hello Waleed!\n\nA request to start all cars has successfully been sent!\n\n The request has been sent at: {}'.format(datetime.datetime.now()).split('.')[0]
         mail.send(msg)
         return 'Mail sent!'
     except Exception:
@@ -291,10 +370,64 @@ def realpros():
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+
+@app.route('/realpros2')
+def realpros2():
+    print("in real pros2")
+    input_q = Queue(5)
+    output_q = Queue()
+    for i in range(1):
+        t = Thread(target=worker, args=(input_q, output_q))
+        t.daemon = True
+        t.start()
+
+    video_init2.init()
+    video_capture = video_init2.start()
+    fps = fps_init.start()
+    def generate():
+        # print("in gen real pros")
+        frame = video_capture.read()
+
+        while video_capture.grabbed:
+            # print("in while gen real pros")
+            input_q.put(frame)
+            t = time.time()
+
+            if output_q.empty():
+                pass
+            else:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                data = output_q.get()
+                rec_points = data['rect_points']
+                class_names = data['class_names']
+                class_colors = data['class_colors']
+                for point, name, color in zip(rec_points, class_names, class_colors):
+                   cA = cv2.rectangle(frame, (int(point['xmin'] * 480), int(point['ymin'] * 360)),
+                                  (int(point['xmax'] * 480), int(point['ymax'] * 360)), color, 3)
+                   cB = cv2.rectangle(frame, (int(point['xmin'] * 480), int(point['ymin'] * 360)),
+                                  (int(point['xmin'] * 480) + len(name[0]) * 6,
+                                   int(point['ymin'] * 360) - 10), color, -1, cv2.LINE_AA)
+                   cv2.putText(frame, name[0], (int(point['xmin'] * 480), int(point['ymin'] * 360)), font,
+                                0.3, (0, 0, 0), 1)
+
+                payload = cv2.imencode('.jpg', frame)[1].tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + payload + b'\r\n')
+                frame = video_capture.read()
+                detection_graph = client.detection_graph
+                sess = client.sess
+                detect_objects_webcam(frame, sess, detection_graph)
+                img_counter = 0
+
+                # centers=[]
+            fps.update()
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
 client = ObjectDetector()
 
 video_init = liveStream(src=0, width=480, height=360)
-# video_init2 = liveStream(src="http://192.168.1.197:8020/videoView", width=480, height=360)
+video_init2 = liveStream(src="http://172.20.10.2:8020/videoView", width=480, height=360)
 
 fps_init = FPS()
 
