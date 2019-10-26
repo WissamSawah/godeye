@@ -50,6 +50,10 @@
       {% endwith %}
         <div class="movieNav">
             <h3 class="control">Control Panel</h3>
+            <!-- <form method="POST">
+                <input type="text" name="ip" placeholder="ip" id="ip" required>
+                <input type="submit">
+            </form> -->
             <div>
                 <form id="rstop" class="form-horizontal" method=post action={{ url_for( 'realproc') }}>
                 <input style="background-color:green !important; border-color:green !important;" type="submit" name="realstop" onclick="WaitDisplay('rstop');" value="Refreash Cam" class="btn btn-primary"></form>
@@ -83,6 +87,8 @@
       <div class="media">
         <img style="width: 65%;
         margin-left: 11em;" src="{{ url_for('realpros')}}" class="img-thumbnail">
+        <img style="width: 65%;
+        margin-left: 11em;" src="{{ url_for('realpros2')}}" class="img-thumbnail">
 
       </div>
 
