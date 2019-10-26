@@ -427,7 +427,7 @@ def realpros2():
 client = ObjectDetector()
 
 video_init = liveStream(src=0, width=480, height=360)
-video_init2 = liveStream(src="http://172.20.10.2:8020/videoView", width=480, height=360)
+video_init2 = liveStream(src=0, width=480, height=360)
 
 fps_init = FPS()
 
