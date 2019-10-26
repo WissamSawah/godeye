@@ -426,6 +426,8 @@ def realpros2():
 
 client = ObjectDetector()
 
+# Change the 0 value to an ip address to stream from ip camera
+# 0 value = webcam
 video_init = liveStream(src=0, width=480, height=360)
 video_init2 = liveStream(src=0, width=480, height=360)
 
