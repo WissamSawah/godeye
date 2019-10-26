@@ -28,3 +28,21 @@ The software is running on localhost 5000.
 - The camera software (Outside the application) Camera 2 
   http://0.0.0.0:5000/realpros2
   
+## Download and run step by step
+
+1. Clone the applicaton 
+   `git clone https://github.com/WissamSawah/godeye.git`
+
+2. Download the required packages 
+   `pip3 install -r requirements.txt`
+   
+3. Create MYSQL database by running the following commands
+   - `export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:$DYLD_LIBRARY_PATH`
+   - `mysql -uroot -p < setup.sql`
+   
+4. Run the application
+   `python3 flask_app.py`
+   
+
+
+  
