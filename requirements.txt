@@ -85,7 +85,7 @@ protobuf==3.9.1
 ptyprocess==0.6.0
 pydobot==1.0.2
 Pygments==2.4.2
-PyJWT==1.7.1
+PyJWT==2.4.0
 pylint==2.2.2
 pyparsing==2.4.2
 pyperclip==1.5.27
