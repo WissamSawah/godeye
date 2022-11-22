@@ -77,7 +77,7 @@ passlib==1.7.1
 pbr==5.4.3
 pexpect==4.7.0
 pickleshare==0.7.5
-Pillow==6.1.0
+Pillow==9.3.0
 pkginfo==1.5.0.1
 prometheus-client==0.7.1
 prompt-toolkit==2.0.9
